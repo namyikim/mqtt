@@ -42,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView volumeLevel, status;
     private static String volumeVisual = "";
 
-    private Handler handler;
+    private Handler handler = null;
+    private Runnable r = null;
     //namyi47.kim
 
     @Override
@@ -80,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         TextView volumeLevel = (TextView) findViewById(R.id.volumeLevel);
         TextView volumeBars = (TextView) findViewById(R.id.volumeBars);
 
-        if(mSensor== null)
+        if(mSensor == null)
             mSensor = new SoundMeter();
 
         try {
@@ -93,13 +94,15 @@ public class MainActivity extends AppCompatActivity {
         }
         handler = new Handler();
 
-        final Runnable r = new Runnable() {
+        r = new Runnable() {
             public void run() {
                 Log.d("Amplify","HERE");
                 Toast.makeText(getBaseContext(), "Working!", Toast.LENGTH_LONG).show();
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        if(mSensor == null)
+                            return;
                         // Get the volume from 0 to 255 in 'int'
                         double volume = 10 * mSensor.getTheAmplitude() / 32768;
                         int volumeToSend = (int) volume;
@@ -109,17 +112,10 @@ public class MainActivity extends AppCompatActivity {
                         for( int i=0; i<volumeToSend; i++){
                             volumeVisual += "|";
                         }
-
                         updateTextView(R.id.volumeBars, "Volume: " + String.valueOf(volumeVisual));
 
                         //send volume to the other
-                        try {
-                            pahoMqttClient.publishMessage(client, String.valueOf(volumeVisual), 1, Constants.PUBLISH_TOPIC);
-                        } catch (MqttException e) {
-                            e.printStackTrace();
-                        } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
-                        }
+                        sendMQTTMessage(String.valueOf(volumeVisual));
 
                         handler.postDelayed(this, 250); // amount of delay between every cycle of volume level detection + sending the data  out
                     }
@@ -248,46 +244,26 @@ public class MainActivity extends AppCompatActivity {
 
                 if(matches.get(i).contains("hi"))
                 {
-                    try {
-                        pahoMqttClient.publishMessage(client, "hi", 1, Constants.PUBLISH_TOPIC);
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
+                    //send volume to the other
+                    sendMQTTMessage("hi");
                     Toast.makeText(MainActivity.this, "hi", Toast.LENGTH_SHORT).show();
                 }
                 if(matches.get(i).contains("Subway"))
                 {
-                    try {
-                        pahoMqttClient.publishMessage(client, "subway", 1, Constants.PUBLISH_TOPIC);
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
+                    //send volume to the other
+                    sendMQTTMessage("subway");
                     Toast.makeText(MainActivity.this, "subway", Toast.LENGTH_SHORT).show();
                 }
                 if(matches.get(i).contains("car"))
                 {
-                    try {
-                        pahoMqttClient.publishMessage(client, "car", 1, Constants.PUBLISH_TOPIC);
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
+                    //send volume to the other
+                    sendMQTTMessage("car");
                     Toast.makeText(MainActivity.this, "car", Toast.LENGTH_SHORT).show();
                 }
                 if(matches.get(i).contains("ambulance"))
                 {
-                    try {
-                        pahoMqttClient.publishMessage(client, "ambulance", 1, Constants.PUBLISH_TOPIC);
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
+                    //send volume to the other
+                    sendMQTTMessage("ambulance");
                     Toast.makeText(MainActivity.this, "ambulance", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -342,12 +318,25 @@ public class MainActivity extends AppCompatActivity {
     public void onDestroy() {
 
         super.onDestroy();
-
+        handler.removeCallbacks(r);
+        mSensor = null;
     }
 
     public void updateTextView(int text_id, String toThis) {
 
         TextView val = (TextView) findViewById(text_id);
         val.setText(toThis);
+    }
+    public void sendMQTTMessage(String msg)
+    {
+        //send volume to the other
+        try {
+            if(pahoMqttClient!= null)
+                pahoMqttClient.publishMessage(client, msg, 1, Constants.PUBLISH_TOPIC);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 }
