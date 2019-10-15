@@ -49,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.d(TAG,"onCreate");
         setContentView(R.layout.activity_main);
         pahoMqttClient = new PahoMqttClient();
 
@@ -84,45 +86,7 @@ public class MainActivity extends AppCompatActivity {
         if(mSensor == null)
             mSensor = new SoundMeter();
 
-        try {
-            if(mSensor != null)
-                mSensor.start();
-            Toast.makeText(getBaseContext(), "Sound sensor initiated.", Toast.LENGTH_SHORT).show();
-        } catch (IllegalStateException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        handler = new Handler();
 
-        r = new Runnable() {
-            public void run() {
-                Log.d("Amplify","HERE");
-                Toast.makeText(getBaseContext(), "Working!", Toast.LENGTH_LONG).show();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(mSensor == null)
-                            return;
-                        // Get the volume from 0 to 255 in 'int'
-                        double volume = 10 * mSensor.getTheAmplitude() / 32768;
-                        int volumeToSend = (int) volume;
-                        updateTextView(R.id.volumeLevel, "Volume: " + String.valueOf(volumeToSend));
-
-                        volumeVisual = "";
-                        for( int i=0; i<volumeToSend; i++){
-                            volumeVisual += "|";
-                        }
-                        updateTextView(R.id.volumeBars, "Volume: " + String.valueOf(volumeVisual));
-
-                        //send volume to the other
-                        sendMQTTMessage(String.valueOf(volumeVisual));
-
-                        handler.postDelayed(this, 250); // amount of delay between every cycle of volume level detection + sending the data  out
-                    }
-                });
-            }
-        };
-        handler.postDelayed(r, 250);
         //namyi47.kim
 
         client = pahoMqttClient.getMqttClient(getApplicationContext(), Constants.MQTT_BROKER_URL, Constants.CLIENT_ID);
@@ -278,18 +242,52 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        updateTextView(R.id.status, "On resume, need to initiate sound sensor.");
-        // Sound based code
+        Log.d(TAG,"onResume");
         try {
-            if(mSensor != null) {
+            if(mSensor != null)
                 mSensor.start();
-                Toast.makeText(getBaseContext(), "Sound sensor resumed.", Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(getBaseContext(), "Sound sensor initiated.", Toast.LENGTH_SHORT).show();
         } catch (IllegalStateException e) {
             // TODO Auto-generated catch block
-            Toast.makeText(getBaseContext(), "On resume, sound sensor messed up...", Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
+        if(handler == null)
+            handler = new Handler();
+
+        if( r == null) {
+            r = new Runnable() {
+                public void run() {
+                    Toast.makeText(getBaseContext(), "Working!", Toast.LENGTH_LONG).show();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mSensor == null)
+                                return;
+                            Log.d(TAG, "SoundVolume recognizer is running!");
+                            // Get the volume from 0 to 255 in 'int'
+                            double volume = 10 * mSensor.getTheAmplitude() / 32768;
+                            int volumeToSend = (int) volume;
+                            updateTextView(R.id.volumeLevel, "Volume: " + String.valueOf(volumeToSend));
+
+                            volumeVisual = "";
+                            for (int i = 0; i < volumeToSend; i++) {
+                                volumeVisual += "|";
+                            }
+                            updateTextView(R.id.volumeBars, "Volume: " + String.valueOf(volumeVisual));
+
+                            //send volume to the other
+                            sendMQTTMessage(String.valueOf(volumeVisual));
+
+                            if(handler != null)
+                                handler.postDelayed(this, 250); // amount of delay between every cycle of volume level detection + sending the data  out
+                        }
+                    });
+                }
+            };
+            handler.postDelayed(r, 250);
+        }
+
+
     }
     private void start() throws IllegalStateException, IOException {
         if(mSensor != null)
@@ -309,16 +307,33 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onPause() {
-        updateTextView(R.id.status, "Paused.");
         super.onPause();
+
+        Log.d(TAG,"onPause");
+
+        updateTextView(R.id.status, "Paused.");
+
+        if(handler != null && r != null) {
+            handler.removeCallbacks(r);
+            handler = null;
+
+            r = null;
+        }
+
         stop();
     }
 
     @Override
     public void onDestroy() {
-
+        Log.d(TAG,"onDestroy");
         super.onDestroy();
-        handler.removeCallbacks(r);
+        if( handler != null && r != null)
+        {
+            handler.removeCallbacks(r);
+            handler = null;
+
+            r = null;
+        }
         mSensor = null;
     }
 
