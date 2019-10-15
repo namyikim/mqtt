@@ -1,11 +1,14 @@
 package com.app.androidkt.mqtt;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,6 +18,7 @@ import android.widget.Toast;
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
@@ -33,6 +37,12 @@ public class MainActivity extends AppCompatActivity {
 
     Intent intent_voicerecognizer;
     SpeechRecognizer mRecognizer;
+
+    private SoundMeter mSensor = null;
+    private TextView volumeLevel, status;
+    private static String volumeVisual = "";
+
+    private Handler handler;
     //namyi47.kim
 
     @Override
@@ -62,6 +72,57 @@ public class MainActivity extends AppCompatActivity {
             mRecognizer.setRecognitionListener(listener);
             mRecognizer.startListening(intent_voicerecognizer);
         });
+
+        TextView volumeLevel = (TextView) findViewById(R.id.volumeLevel);
+        TextView volumeBars = (TextView) findViewById(R.id.volumeBars);
+
+        if(mSensor== null)
+            mSensor = new SoundMeter();
+
+        try {
+            if(mSensor != null)
+                mSensor.start();
+            Toast.makeText(getBaseContext(), "Sound sensor initiated.", Toast.LENGTH_SHORT).show();
+        } catch (IllegalStateException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        handler = new Handler();
+
+        final Runnable r = new Runnable() {
+            public void run() {
+                Log.d("Amplify","HERE");
+                Toast.makeText(getBaseContext(), "Working!", Toast.LENGTH_LONG).show();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Get the volume from 0 to 255 in 'int'
+                        double volume = 10 * mSensor.getTheAmplitude() / 32768;
+                        int volumeToSend = (int) volume;
+                        updateTextView(R.id.volumeLevel, "Volume: " + String.valueOf(volumeToSend));
+
+                        volumeVisual = "";
+                        for( int i=0; i<volumeToSend; i++){
+                            volumeVisual += "|";
+                        }
+
+                        updateTextView(R.id.volumeBars, "Volume: " + String.valueOf(volumeVisual));
+
+                        //send volume to the other
+                        try {
+                            pahoMqttClient.publishMessage(client, String.valueOf(volumeVisual), 1, Constants.PUBLISH_TOPIC);
+                        } catch (MqttException e) {
+                            e.printStackTrace();
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
+
+                        handler.postDelayed(this, 250); // amount of delay between every cycle of volume level detection + sending the data  out
+                    }
+                });
+            }
+        };
+        handler.postDelayed(r, 250);
         //namyi47.kim
 
         client = pahoMqttClient.getMqttClient(getApplicationContext(), Constants.MQTT_BROKER_URL, Constants.CLIENT_ID);
@@ -234,4 +295,54 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEvent(int eventType, Bundle params) {}
     };
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateTextView(R.id.status, "On resume, need to initiate sound sensor.");
+        // Sound based code
+        try {
+            if(mSensor != null) {
+                mSensor.start();
+                Toast.makeText(getBaseContext(), "Sound sensor resumed.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IllegalStateException e) {
+            // TODO Auto-generated catch block
+            Toast.makeText(getBaseContext(), "On resume, sound sensor messed up...", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+    private void start() throws IllegalStateException, IOException {
+        if(mSensor != null)
+            mSensor.start();
+    }
+
+    private void stop() {
+        if(mSensor != null) {
+            mSensor.stop();
+        }
+    }
+
+    private void sleep() {
+        if(mSensor != null)
+            mSensor.stop();
+    }
+
+    @Override
+    public void onPause() {
+        updateTextView(R.id.status, "Paused.");
+        super.onPause();
+        stop();
+    }
+
+    @Override
+    public void onDestroy() {
+
+        super.onPause();
+    }
+
+    public void updateTextView(int text_id, String toThis) {
+
+        TextView val = (TextView) findViewById(text_id);
+        val.setText(toThis);
+    }
 }
