@@ -23,8 +23,8 @@
         android:layout_width="124dp"
         android:layout_height="48dp"
         android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
         android:layout_marginTop="11dp"
+        android:layout_marginRight="8dp"
         android:text="Publish"
         app:layout_constraintHorizontal_bias="0.416"
         app:layout_constraintLeft_toRightOf="@+id/textMessage"
@@ -48,9 +48,8 @@
         android:id="@+id/subscribe"
         android:layout_width="124dp"
         android:layout_height="48dp"
-        android:layout_marginLeft="0dp"
-        android:layout_marginRight="8dp"
         android:layout_marginTop="24dp"
+        android:layout_marginRight="8dp"
         android:text="Subscribe"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="@+id/publishMessage"
@@ -61,7 +60,6 @@
         android:id="@+id/unSubscribeTopic"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_marginRight="0dp"
         android:layout_marginTop="24dp"
         android:ems="10"
         android:hint="Unsubscribe topic"
@@ -76,12 +74,36 @@
         android:layout_width="124dp"
         android:layout_height="48dp"
         android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
         android:layout_marginTop="18dp"
+        android:layout_marginRight="8dp"
         android:text="UnSubscribe"
         app:layout_constraintHorizontal_bias="0.416"
         app:layout_constraintLeft_toRightOf="@+id/unSubscribeTopic"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/subscribe" />
+
+    <TextView
+        android:id="@+id/sttresult"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="559dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginRight="10dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toTopOf="@+id/sttstart"
+        app:layout_constraintEnd_toEndOf="@+id/sttstart"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/sttstart"
+        android:layout_width="159dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="78dp"
+        android:text="Button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sttresult" />
+
 
 </android.support.constraint.ConstraintLayout>
