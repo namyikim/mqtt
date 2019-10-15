@@ -67,10 +67,14 @@ public class MainActivity extends AppCompatActivity {
         intent_voicerecognizer=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent_voicerecognizer.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,getPackageName());
         intent_voicerecognizer.putExtra(RecognizerIntent.EXTRA_LANGUAGE,"en-EN");
-        sttBtn.setOnClickListener(v ->{
-            mRecognizer=SpeechRecognizer.createSpeechRecognizer(this);
-            mRecognizer.setRecognitionListener(listener);
-            mRecognizer.startListening(intent_voicerecognizer);
+
+        sttBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mRecognizer=SpeechRecognizer.createSpeechRecognizer(MainActivity.this);
+                mRecognizer.setRecognitionListener(listener);
+                mRecognizer.startListening(intent_voicerecognizer);
+            }
         });
 
         TextView volumeLevel = (TextView) findViewById(R.id.volumeLevel);
@@ -337,7 +341,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
 
-        super.onPause();
+        super.onDestroy();
+
     }
 
     public void updateTextView(int text_id, String toThis) {
