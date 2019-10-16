@@ -86,19 +86,23 @@
         android:id="@+id/divider"
         android:layout_width="395dp"
         android:layout_height="1dp"
+        android:layout_marginTop="40dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
+        android:layout_marginBottom="35dp"
         android:background="?android:attr/listDivider"
+        app:layout_constraintBottom_toBottomOf="@+id/status"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:layout_editor_absoluteY="239dp" />
+        app:layout_constraintTop_toBottomOf="@+id/unSubscribeTopic" />
 
     <TextView
         android:id="@+id/status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="23dp"
         android:text="status"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="256dp" />
+        app:layout_constraintBottom_toTopOf="@+id/volumeLevel"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/volumeLevel"
@@ -130,11 +134,17 @@
 
     <View
         android:id="@+id/divider2"
-        android:layout_width="395dp"
+        android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="63dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginRight="5dp"
         android:background="?android:attr/listDivider"
-        tools:layout_editor_absoluteX="5dp"
-        tools:layout_editor_absoluteY="515dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/volumeBars" />
 
     <TextView
         android:id="@+id/sttresult"
@@ -158,6 +168,26 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/sttresult" />
+
+    <Button
+        android:id="@+id/startSndVol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:text="Start"
+        app:layout_constraintBottom_toTopOf="@+id/divider2"
+        app:layout_constraintStart_toStartOf="@+id/divider2" />
+
+    <Button
+        android:id="@+id/endSndVol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:text="End"
+        app:layout_constraintBottom_toTopOf="@+id/divider2"
+        app:layout_constraintStart_toEndOf="@+id/startSndVol" />
 
 
 </android.support.constraint.ConstraintLayout>
