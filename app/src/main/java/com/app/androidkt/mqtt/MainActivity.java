@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText textMessage, subscribeTopic, unSubscribeTopic;
     private Button publishMessage, subscribe, unSubscribe;
 
+    private Button startSndVol, endSndVol;
+
     //namyi47.kim
     private Button sttBtn;
     private TextView textView;
@@ -71,12 +73,87 @@ public class MainActivity extends AppCompatActivity {
         intent_voicerecognizer.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,getPackageName());
         intent_voicerecognizer.putExtra(RecognizerIntent.EXTRA_LANGUAGE,"en-EN");
 
+
+
         sttBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                stop();
+
                 mRecognizer=SpeechRecognizer.createSpeechRecognizer(MainActivity.this);
-                mRecognizer.setRecognitionListener(listener);
-                mRecognizer.startListening(intent_voicerecognizer);
+                if(mRecognizer != null) {
+                    mRecognizer.setRecognitionListener(listener);
+                    mRecognizer.startListening(intent_voicerecognizer);
+                }
+            }
+        });
+
+        startSndVol = (Button) findViewById(R.id.startSndVol);
+        startSndVol.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(handler != null)
+                    return;
+
+                try {
+                    if(mSensor != null)
+                        mSensor.start();
+                    Toast.makeText(getBaseContext(), "Sound sensor initiated.", Toast.LENGTH_SHORT).show();
+                } catch (IllegalStateException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                if(handler == null)
+                    handler = new Handler();
+
+                if( r == null) {
+                    r = new Runnable() {
+                        public void run() {
+                            Toast.makeText(getBaseContext(), "Working!", Toast.LENGTH_LONG).show();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (mSensor == null)
+                                        return;
+                                    Log.d(TAG, "SoundVolume recognizer is running!");
+                                    // Get the volume from 0 to 255 in 'int'
+                                    double volume = 10 * mSensor.getTheAmplitude() / 32768;
+                                    int volumeToSend = (int) volume;
+                                    updateTextView(R.id.volumeLevel, "Volume: " + String.valueOf(volumeToSend));
+
+                                    volumeVisual = "";
+                                    for (int i = 0; i < volumeToSend; i++) {
+                                        volumeVisual += "|";
+                                    }
+                                    updateTextView(R.id.volumeBars, "Volume: " + String.valueOf(volumeVisual));
+
+                                    //send volume to the other
+                                    sendMQTTMessage(String.valueOf(volumeVisual));
+
+                                    if(handler != null)
+                                        handler.postDelayed(this, 250); // amount of delay between every cycle of volume level detection + sending the data  out
+                                }
+                            });
+                        }
+                    };
+                    handler.postDelayed(r, 250);
+                }
+            }
+        });
+        endSndVol = (Button) findViewById(R.id.endSndVol);
+        endSndVol.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(handler == null)
+                    return;
+                if(handler != null && r != null) {
+                    handler.removeCallbacks(r);
+                    handler = null;
+
+                    r = null;
+                }
+
             }
         });
 
@@ -243,49 +320,7 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         Log.d(TAG,"onResume");
-        try {
-            if(mSensor != null)
-                mSensor.start();
-            Toast.makeText(getBaseContext(), "Sound sensor initiated.", Toast.LENGTH_SHORT).show();
-        } catch (IllegalStateException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        if(handler == null)
-            handler = new Handler();
 
-        if( r == null) {
-            r = new Runnable() {
-                public void run() {
-                    Toast.makeText(getBaseContext(), "Working!", Toast.LENGTH_LONG).show();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (mSensor == null)
-                                return;
-                            Log.d(TAG, "SoundVolume recognizer is running!");
-                            // Get the volume from 0 to 255 in 'int'
-                            double volume = 10 * mSensor.getTheAmplitude() / 32768;
-                            int volumeToSend = (int) volume;
-                            updateTextView(R.id.volumeLevel, "Volume: " + String.valueOf(volumeToSend));
-
-                            volumeVisual = "";
-                            for (int i = 0; i < volumeToSend; i++) {
-                                volumeVisual += "|";
-                            }
-                            updateTextView(R.id.volumeBars, "Volume: " + String.valueOf(volumeVisual));
-
-                            //send volume to the other
-                            sendMQTTMessage(String.valueOf(volumeVisual));
-
-                            if(handler != null)
-                                handler.postDelayed(this, 250); // amount of delay between every cycle of volume level detection + sending the data  out
-                        }
-                    });
-                }
-            };
-            handler.postDelayed(r, 250);
-        }
 
 
     }
@@ -313,12 +348,8 @@ public class MainActivity extends AppCompatActivity {
 
         updateTextView(R.id.status, "Paused.");
 
-        if(handler != null && r != null) {
-            handler.removeCallbacks(r);
-            handler = null;
-
-            r = null;
-        }
+        if(mRecognizer!= null)
+            mRecognizer.stopListening();
 
         stop();
     }
@@ -335,6 +366,11 @@ public class MainActivity extends AppCompatActivity {
             r = null;
         }
         mSensor = null;
+        if(mRecognizer!= null) {
+            mRecognizer.stopListening();
+            mRecognizer.destroy();
+            mRecognizer = null;
+        }
     }
 
     public void updateTextView(int text_id, String toThis) {
