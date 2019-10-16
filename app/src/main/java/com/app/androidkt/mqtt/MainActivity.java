@@ -28,10 +28,8 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = "MainActivity";
     private PahoMqttClient pahoMqttClient;
 
-    private EditText textMessage, subscribeTopic, unSubscribeTopic;
-    private Button publishMessage, subscribe, unSubscribe;
-
     private Button startSndVol, endSndVol;
+    private Button hiBtn,carBtn,subwayBtn,ambulanceBtn;
 
     //namyi47.kim
     private Button sttBtn;
@@ -46,6 +44,17 @@ public class MainActivity extends AppCompatActivity {
 
     private Handler handler = null;
     private Runnable r = null;
+
+    public String importantText[] = {
+            "Hi",
+            "Car",
+            "Subway",
+            "Ambulance"
+    };
+    public final int IDX_HI = 0;
+    public final int IDX_CAR = 1;
+    public final int IDX_SUBWAY = 2;
+    public final int IDX_AMBULANCE = 3;
     //namyi47.kim
 
     @Override
@@ -56,15 +65,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         pahoMqttClient = new PahoMqttClient();
 
-        textMessage = (EditText) findViewById(R.id.textMessage);
-        publishMessage = (Button) findViewById(R.id.publishMessage);
-
-        subscribe = (Button) findViewById(R.id.subscribe);
-        unSubscribe = (Button) findViewById(R.id.unSubscribe);
-
-        subscribeTopic = (EditText) findViewById(R.id.subscribeTopic);
-        unSubscribeTopic = (EditText) findViewById(R.id.unSubscribeTopic);
-
         //namyi47.kim
         textView = (TextView)findViewById(R.id.sttresult);
         sttBtn = (Button) findViewById(R.id.sttstart);
@@ -72,8 +72,6 @@ public class MainActivity extends AppCompatActivity {
         intent_voicerecognizer=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent_voicerecognizer.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,getPackageName());
         intent_voicerecognizer.putExtra(RecognizerIntent.EXTRA_LANGUAGE,"en-EN");
-
-
 
         sttBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -88,6 +86,39 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        hiBtn = (Button) findViewById(R.id.button_hi);
+        hiBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMQTTMessage(importantText[IDX_HI]);
+                Toast.makeText(MainActivity.this, importantText[IDX_HI], Toast.LENGTH_SHORT).show();
+            }
+        });
+        carBtn = (Button) findViewById(R.id.button_car);
+        carBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMQTTMessage(importantText[IDX_CAR]);
+                Toast.makeText(MainActivity.this, importantText[IDX_CAR], Toast.LENGTH_SHORT).show();
+            }
+        });
+        subwayBtn = (Button) findViewById(R.id.button_subway);
+        subwayBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMQTTMessage(importantText[IDX_SUBWAY]);
+                Toast.makeText(MainActivity.this, importantText[IDX_SUBWAY], Toast.LENGTH_SHORT).show();
+            }
+        });
+        ambulanceBtn = (Button) findViewById(R.id.button_ambulance);
+        ambulanceBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMQTTMessage(importantText[IDX_AMBULANCE]);
+                Toast.makeText(MainActivity.this, importantText[IDX_AMBULANCE], Toast.LENGTH_SHORT).show();
+            }
+        });
+
 
         startSndVol = (Button) findViewById(R.id.startSndVol);
         startSndVol.setOnClickListener(new View.OnClickListener() {
@@ -168,49 +199,6 @@ public class MainActivity extends AppCompatActivity {
 
         client = pahoMqttClient.getMqttClient(getApplicationContext(), Constants.MQTT_BROKER_URL, Constants.CLIENT_ID);
 
-        publishMessage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String msg = textMessage.getText().toString().trim();
-                if (!msg.isEmpty()) {
-                    try {
-                        pahoMqttClient.publishMessage(client, msg, 1, Constants.PUBLISH_TOPIC);
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-
-        subscribe.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String topic = subscribeTopic.getText().toString().trim();
-                if (!topic.isEmpty()) {
-                    try {
-                        pahoMqttClient.subscribe(client, topic, 1);
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-        unSubscribe.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String topic = unSubscribeTopic.getText().toString().trim();
-                if (!topic.isEmpty()) {
-                    try {
-                        pahoMqttClient.unSubscribe(client, topic);
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-
         Intent intent = new Intent(MainActivity.this, MqttMessageService.class);
         startService(intent);
     }
@@ -218,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
     private RecognitionListener listener = new RecognitionListener() {
         @Override
         public void onReadyForSpeech(Bundle params) {
-            Toast.makeText(getApplicationContext(),"음성인식을 시작합니다.",Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(),"Voice recognizer start.",Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -239,73 +227,59 @@ public class MainActivity extends AppCompatActivity {
 
             switch (error) {
                 case SpeechRecognizer.ERROR_AUDIO:
-                    message = "오디오 에러";
+                    message = "Audio Error";
                     break;
                 case SpeechRecognizer.ERROR_CLIENT:
-                    message = "클라이언트 에러";
+                    message = "Client Error";
                     break;
                 case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                    message = "퍼미션 없음";
+                    message = "No Permission";
                     break;
                 case SpeechRecognizer.ERROR_NETWORK:
-                    message = "네트워크 에러";
+                    message = "Network Error";
                     break;
                 case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                    message = "네트웍 타임아웃";
+                    message = "Network Timeout";
                     break;
                 case SpeechRecognizer.ERROR_NO_MATCH:
-                    message = "찾을 수 없음";
+                    message = "No match";
                     break;
                 case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                    message = "RECOGNIZER가 바쁨";
+                    message = "Recognizer is busy";
                     break;
                 case SpeechRecognizer.ERROR_SERVER:
-                    message = "서버가 이상함";
+                    message = "Server Error";
                     break;
                 case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                    message = "말하는 시간초과";
+                    message = "Speech Timeout";
                     break;
                 default:
-                    message = "알 수 없는 오류임";
+                    message = "UNKNOWN ERROR";
                     break;
             }
 
-            Toast.makeText(getApplicationContext(), "에러가 발생하였습니다. : " + message,Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Error is occurred : " + message,Toast.LENGTH_SHORT).show();
         }
 
         @Override
         public void onResults(Bundle results) {
-            // 말을 하면 ArrayList에 단어를 넣고 textView에 단어를 이어줍니다.
             ArrayList<String> matches =
                     results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
             for(int i = 0; i < matches.size() ; i++){
 
                 textView.setText(matches.get(i));
+                //send volume to the other
+                String recognizedWord = matches.get(i);
 
-                if(matches.get(i).contains("hi"))
+                for(int idx = 0; idx<4;idx++)
                 {
-                    //send volume to the other
-                    sendMQTTMessage("hi");
-                    Toast.makeText(MainActivity.this, "hi", Toast.LENGTH_SHORT).show();
-                }
-                if(matches.get(i).contains("Subway"))
-                {
-                    //send volume to the other
-                    sendMQTTMessage("subway");
-                    Toast.makeText(MainActivity.this, "subway", Toast.LENGTH_SHORT).show();
-                }
-                if(matches.get(i).contains("car"))
-                {
-                    //send volume to the other
-                    sendMQTTMessage("car");
-                    Toast.makeText(MainActivity.this, "car", Toast.LENGTH_SHORT).show();
-                }
-                if(matches.get(i).contains("ambulance"))
-                {
-                    //send volume to the other
-                    sendMQTTMessage("ambulance");
-                    Toast.makeText(MainActivity.this, "ambulance", Toast.LENGTH_SHORT).show();
+                    if(matches.get(i).contains(importantText[idx]))
+                    {
+                        // Send message to the other device
+                        sendMQTTMessage(importantText[idx]);
+                        Toast.makeText(MainActivity.this, importantText[idx], Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }
