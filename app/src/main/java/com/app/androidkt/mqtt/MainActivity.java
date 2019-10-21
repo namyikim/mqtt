@@ -130,7 +130,6 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if(mSensor != null)
                         mSensor.start();
-                    Toast.makeText(getBaseContext(), "Sound sensor initiated.", Toast.LENGTH_SHORT).show();
                 } catch (IllegalStateException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
