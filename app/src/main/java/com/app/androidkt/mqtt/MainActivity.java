@@ -51,6 +51,12 @@ public class MainActivity extends AppCompatActivity {
             "Subway",
             "Ambulance"
     };
+    public String sendingText[] = {
+            "{ \"Command\" : \"hi\"}",
+            "{ \"Command\" : \"car\"}",
+            "{ \"Command\" : \"subway\"}",
+            "{ \"Command\" : \"ambulance\"}",""
+    };
     public final int IDX_HI = 0;
     public final int IDX_CAR = 1;
     public final int IDX_SUBWAY = 2;
@@ -90,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         hiBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMQTTMessage(importantText[IDX_HI]);
+                sendMQTTMessage(sendingText[IDX_HI]);
                 Toast.makeText(MainActivity.this, importantText[IDX_HI], Toast.LENGTH_SHORT).show();
             }
         });
@@ -98,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         carBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMQTTMessage(importantText[IDX_CAR]);
+                sendMQTTMessage(sendingText[IDX_CAR]);
                 Toast.makeText(MainActivity.this, importantText[IDX_CAR], Toast.LENGTH_SHORT).show();
             }
         });
@@ -106,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         subwayBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMQTTMessage(importantText[IDX_SUBWAY]);
+                sendMQTTMessage(sendingText[IDX_SUBWAY]);
                 Toast.makeText(MainActivity.this, importantText[IDX_SUBWAY], Toast.LENGTH_SHORT).show();
             }
         });
@@ -114,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         ambulanceBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMQTTMessage(importantText[IDX_AMBULANCE]);
+                sendMQTTMessage(sendingText[IDX_AMBULANCE]);
                 Toast.makeText(MainActivity.this, importantText[IDX_AMBULANCE], Toast.LENGTH_SHORT).show();
             }
         });
@@ -267,16 +273,18 @@ public class MainActivity extends AppCompatActivity {
 
             for(int i = 0; i < matches.size() ; i++){
 
+                Log.d("namyi","matches.get(i) :"+matches.get(i) );
+
                 textView.setText(matches.get(i));
                 //send volume to the other
                 String recognizedWord = matches.get(i);
 
                 for(int idx = 0; idx<4;idx++)
                 {
-                    if(matches.get(i).contains(importantText[idx]))
+                    if(matches.get(i).contains(importantText[idx]) || matches.get(i).contains(sendingText[idx]))
                     {
                         // Send message to the other device
-                        sendMQTTMessage(importantText[idx]);
+                        sendMQTTMessage(sendingText[idx]);
                         Toast.makeText(MainActivity.this, importantText[idx], Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -356,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
         //send volume to the other
         try {
             if(pahoMqttClient!= null)
-                pahoMqttClient.publishMessage(client, msg, 1, Constants.PUBLISH_TOPIC);
+                pahoMqttClient.publishMessage(client, msg, 0, Constants.PUBLISH_TOPIC);
         } catch (MqttException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
